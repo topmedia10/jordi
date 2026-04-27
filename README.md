@@ -11,7 +11,7 @@ This project contains a Python script that automates the generation of images us
 
 1.  **Clone the Repository**
     ```bash
-    git clone https://github.com/topmediaclick/jordi.git
+    git clone https://github.com/topmedia10/jordi.git
     cd jordi
     ```
 
