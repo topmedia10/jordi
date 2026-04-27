@@ -11,5 +11,10 @@ __pycache__/
 # Output directory
 output_images/
 
+# Image files
+*.png
+*.jpg
+*.jpeg
+
 # macOS system files
 .DS_Store
