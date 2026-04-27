@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# CSV prompt files
+*.csv
+
+# Output directory
+output_images/
+
+# macOS system files
+.DS_Store
