@@ -66,7 +66,14 @@ def main():
 
     # Using the user-specified model: 'gemini-3-pro-image-preview'.
     model = genai.GenerativeModel('gemini-3-pro-image-preview')
-    original_image = Image.open(original_image_path)
+
+    # Prepare the image data once
+    image_bytes = original_image_path.read_bytes()
+    image_mime_type = 'image/png' if original_image_path.suffix.lower() == '.png' else 'image/jpeg'
+    original_image_part = {
+        'mime_type': image_mime_type,
+        'data': image_bytes
+    }
 
     for index, row in df.iterrows():
         scene_name = row["Scene Name"]
@@ -78,59 +85,34 @@ def main():
 
         try:
             # --- 4a. Generate Image ---
+            # Constructing the request with an explicit image part dictionary
             response = model.generate_content(
                 [
                     "Generate a new image based on this original character. The new image should place the character in the following scene or context described in the text. The final image should be a 1:1 square aspect ratio.",
-                    original_image,
+                    original_image_part,
                     prompt_text,
                 ],
             )
             
             # --- 5. Saving the Outputs ---
-            # Assuming the API returns the image data directly in the response.
-            # The exact way to access the image data might vary based on the SDK version.
-            # This is a conceptual implementation. You might need to adjust based on the
-            # actual 'response' object structure from the google-generativeai library.
-            # For this example, we assume the response itself contains the image bytes if successful.
-            # A more robust solution would inspect the response parts.
-            
-            # This is a placeholder for saving the image. The actual implementation depends
-            # on how the Gemini API returns image data via the Python SDK.
-            # Typically, you would access a specific attribute of the response object
-            # that holds the binary image data.
-            # For example, it might be `response.parts[0].blob` or similar.
-            # The following is a conceptual representation.
-            
-            # To make this runnable, we will assume the response has a `_result` attribute
-            # with `candidates` that contain the image bytes. This is a common pattern in GenAI SDKs.
-            # Please verify the actual response structure from your SDK's documentation.
-            if hasattr(response, 'parts') and response.parts:
-                img_bytes = response.parts[0].blob.data
+            # The new library structure returns the image data in response.parts
+            if response.parts:
+                # Assuming the first part is the generated image
+                generated_image_blob = response.parts[0].inline_data
+                img_bytes = generated_image_blob.data
+                
                 with open(output_path, 'wb') as f:
                     f.write(img_bytes)
                 print(f"  - Successfully saved to {output_path}")
-            # The following is a mock-up of what might be needed if the above is not correct.
-            # elif hasattr(response, '_result') and response._result.candidates:
-            #     # This is a hypothetical structure.
-            #     # You would need to find where the image data is in the response.
-            #     # For example, if it's base64 encoded:
-            #     # import base64
-            #     # image_data = base64.b64decode(response._result.candidates[0].content.parts[0].text)
-            #     # with open(output_path, 'wb') as f:
-            #     #     f.write(image_data)
-            #     print(f"  - (Placeholder) Successfully saved to {output_path}")
             else:
-                 # When an image is generated, the response should have a "parts" attribute
-                 # with the image data. If it doesn't, it means the generation failed
-                 # silently or returned only text.
                  print(f"  - Error: Generation failed for '{scene_name}'. The API did not return an image.")
-                 # You can print the response to debug what the API returned:
+                 # To debug, you can inspect the full response:
                  # print("Full API Response:", response)
-
 
         except Exception as e:
             print(f"  - Error: An API error occurred for '{scene_name}': {e}")
             continue # Gracefully continue to the next row
+
 
 if __name__ == "__main__":
     main()
